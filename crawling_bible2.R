@@ -39,7 +39,7 @@ word = table(count)
 kk = head(sort(word, decreasing = T), 20)
 kk
 
-tt = barplot(kk, col = rainbow(20), ylim = c(0,400), las = 2)
+tt = barplot(kk, col = rainbow(20), ylim = c(0,350), las = 2)
 text(tt, kk, label=paste0(kk,"개"), pos = 3, col = 2)
 
 
