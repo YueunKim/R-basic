@@ -8,7 +8,7 @@ library(stringr)
 library(dplyr)
 library(rvest)
 
-register_google(key = "AIzaSyCcHwEAt_eIkxdA_qNS-rPwUc8WjBzlZN8")
+register_google(key = "my_key")
 tt = get_map(location = "대전 중구 대흥동", zoom = 15,
         maptype = 'satellite', #roadmap,hybird,terrian,...
         source='google')
