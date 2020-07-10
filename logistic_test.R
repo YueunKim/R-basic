@@ -95,11 +95,11 @@ kim = function(){
   spec=vector(length = n)
   
   for(i in 1:n){
-    tab = table(data$flushot,log_model2$fitted.values>k[i])
+    tab = table(data$flushot,log_model2$fitted.values > k[i])
     res = c(민감도 = tab[1,1]/sum(tab[2,]),
                특이도 = tab[1,1]/sum(tab[1,]),
                에러율 = (tab[1,2]+tab[2,1])/sum(tab))
-    err_min[i]=tab[2,1]/sum(tab[2,])???????????????
+    err_min[i]=tab[2,1]/sum(tab[2,])
     spec[i] = tab[1,1]/sum(tab[1,])
     print(res)
   }
@@ -115,3 +115,4 @@ kim = function(){
   plot(1-spec, sens, col=2)
 }
 kim()
+
