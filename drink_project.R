@@ -179,3 +179,7 @@ pred2 = data2 %>%
 pred2
 
 
+# simulation 
+# https://macerayarislari.com/ko/300-examples/7-regression-analysis-in-excel.html
+
+# https://m.blog.naver.com/windkiy/221770638020
