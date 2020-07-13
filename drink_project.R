@@ -1,7 +1,7 @@
-setwd("C:/Users/rlagh/OneDrive/바탕 화면/김유은/R/R(AI)/R-basic")
+setwd("C:/Rdata")
 getwd()
 
-data = read.csv("sales_AI.csv")
+data = read.csv("sales_AI_first.csv")
 head(data)
 str(data)
 
@@ -66,7 +66,6 @@ install.packages('car')
 library(car)
 vif(both1)
 vif(both2)
-
 
 
 
