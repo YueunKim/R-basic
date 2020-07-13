@@ -29,7 +29,7 @@ shapiro.test(data1$QTY) # p-valued 값이 0.05보다 작으므로 정규분포�
 shapiro.test(data2$QTY) # p-valued 값이 0.05보다 작으므로 정규분포를 따른다
 
 
-data1 = data1[-c(3)] #???
+data1 = data1[-c(3)]
 cor(data1)
 
 data2 = data2[-c(3)]
@@ -37,8 +37,8 @@ cor(data2)
 
 ### https://bioinformaticsandme.tistory.com/290
 
-out1 = lm(QTY~ ITEM_CNT+PRICE+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY,data=data1)
-out2 = lm(QTY~ ITEM_CNT+PRICE+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY,data=data2) 
+out1 = lm(QTY~ .,data=data1)
+out2 = lm(QTY~ .,data=data2) 
 
 out1
 out2
@@ -84,12 +84,12 @@ install.packages("forecast")
 library(forecast)
 
 pred1 = data1 %>%
-  mutate(pred_QTY1 = -1054+22.46*ITEM_CNT+0.6854*PRICE+8.875*MAXTEMP+0.006731*RAIN_DAY)%>%
+  mutate(pred_QTY1 = -2212-29.59*X+52.28*ITEM_CNT+0.9627*PRICE+9.764*MAXTEMP+0.007023*SALEDAY+0.005063*RAIN_DAY)%>%
   summarise(QTY,round(pred_QTY1))
 pred1
 
 pred2 = data2 %>%
-  mutate(pred_QTY2 = 2328-3.122*PRICE+66.72*MAXTEMP+0.01273*SALEDAY+76.38*HOLIDAY)%>%
+  mutate(pred_QTY2 = -1069-37.10*X+5.350*YM-3.296*PRICE+70.31*MAXTEMP-0.01059*SALEDAY+63.56*HOLIDAY)%>%
   summarise(QTY,round(pred_QTY2))
 pred2
 
@@ -98,16 +98,3 @@ pred2
 # https://macerayarislari.com/ko/300-examples/7-regression-analysis-in-excel.html
 
 # https://m.blog.naver.com/windkiy/221770638020
-
-library(caret)
-
-idx1 = sample(1:nrow(data1), size=nrow(data1)*0.7, replace = F)
-data1_train = data1[idx1, ]
-data1_test = data1[-idx1, ]
-
-train.idx1 = createDataPartition(data1$QTY, p=0.7, list=F)
-data1_train
-
-idx2 = sample(1:nrow(data2), size=nrow(data2)*0.7, replace = F)
-data2_train = data2[idx, ]
-data2_test = data2[-idx, ]
