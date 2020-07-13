@@ -1,4 +1,4 @@
-setwd("C:/Rdata")
+setwd("C:/Users/rlagh/OneDrive/바탕 화면/김유은/R/R(AI)/R-basic")
 getwd()
 
 data = read.csv("sales_AI_first.csv")
@@ -99,15 +99,59 @@ pred2
 
 # https://m.blog.naver.com/windkiy/221770638020
 
+
+
+
+
+
+
+install.packages("caret")
 library(caret)
 
 idx1 = sample(1:nrow(data1), size=nrow(data1)*0.7, replace = F)
 data1_train = data1[idx1, ]
 data1_test = data1[-idx1, ]
 
-train.idx1 = createDataPartition(data1$QTY, p=0.7, list=F)
-data1_train
+dim(data1_train)
+dim(data1_test)
+#train.idx1 = createDataPartition(data1$QTY, p=0.7, list=F)
+#data1_train
 
 idx2 = sample(1:nrow(data2), size=nrow(data2)*0.7, replace = F)
-data2_train = data2[idx, ]
-data2_test = data2[-idx, ]
+data2_train = data2[idx2, ]
+data2_test = data2[-idx2, ]
+dim(data2_train)
+dim(data2_test)
+#train.idx2 = createDataPartition(data2$QTY, p=0.7, list=F)
+#data2_train
+
+
+
+lm.fit1 = lm(PRICE ~ ITEM_CNT+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY, data=data1_train)
+summary(lm.fit1)
+
+lm.fit11 = step(lm.fit1, method="both")
+summary(lm.fit11)
+
+lm.yhat111 = predict(lm.fit11, newdata=data1_test)
+lm.yhat111
+k1=mean((lm.yhat111-data1_test$PRICE)^2)
+sqrt(k1)
+plot(lm.yhat111, data1_test$PRICE)
+abline(a=0,b=1,col=2)
+
+
+lm.fit2 = lm(PRICE ~ ITEM_CNT+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY, data=data2_train)
+summary(lm.fit2)
+
+lm.fit22 = step(lm.fit2, method="both")
+summary(lm.fit22)
+#조정r스퀘어와 f통계량이 원래의 결과값보다 증가하고 p-valued값이 0.05보다 작으므로
+#이 회귀적합 결과를 이용해 평가데이터로 수치예측시행
+
+lm.yhat222 = predict(lm.fit22, newdata=data2_test)
+lm.yhat222
+k2=mean((lm.yhat222-data2_test$PRICE)^2)
+sqrt(k2)
+plot(lm.yhat222, data2_test$PRICE)
+abline(a=0,b=1,col=2)

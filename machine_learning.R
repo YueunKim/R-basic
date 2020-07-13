@@ -124,6 +124,7 @@ confusionMatrix(rf.pred, iris_test$Species)
 data(package="MASS")
 
 boston = as.data.frame(MASS::Boston)
+boston
 names(boston)
 nrow(boston)
 idx = sample(1:nrow(boston), size = nrow(boston)*0.7, replace = F)
