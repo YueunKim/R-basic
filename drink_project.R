@@ -1,13 +1,25 @@
-setwd("C:/Rdata")
+setwd("C:/Users/rlagh/OneDrive/바탕 화면/김유은/R/R(AI)/R-basic")
 getwd()
+
+.libPaths()
+.libPaths("c:/Rdata/Library")
+
+install.packages("dplyr")
+install.packages('car')
+install.packages("forecast")
+install.packages("psych")
+library(forecast)
+library(car)
+library(dplyr)
+
+# https://woosa7.github.io/R-%ED%86%B5%EA%B3%84%EB%B6%84%EC%84%9D-%EB%8B%A4%EC%A4%91%ED%9A%8C%EA%B7%80%EB%B6%84%EC%84%9D/
+
 
 data = read.csv("sales_AI_first1.csv")
 head(data)
 str(data)
 
-
-library(dplyr)
-
+##데이터 추출
 data1 = data %>% filter(CATEGORY == '비타민음료')
 head(data1)
 
@@ -15,10 +27,10 @@ data2 = data %>% filter(CATEGORY == '스포츠,이온음료')
 head(data2)
 
 
-#정규성 검정
+##정규성 검정
 par(mfrow = c(1,1))
-hist(data1$QTY) # 정규분포 x
-hist(data2$QTY) # 정규분포 x
+#hist(data1$QTY) # 정규분포 x
+#hist(data2$QTY) # 정규분포 x
 
 qqnorm(data1$QTY) #Q-Q plot상의 직선에서 점들이 크게 벗어나 있지 않는다면 QTY 변수는 정규 분포를 따른다고 볼 수 있다.
 qqline(data1$QTY) #Q-Q plot상의 직선에서 점들이 크게 벗어나 있지 않는다면 QTY 변수는 정규 분포를 따른다고 볼 수 있다.
@@ -29,8 +41,8 @@ shapiro.test(data1$QTY) # p-valued 값이 0.05보다 작으므로 정규분포�
 shapiro.test(data2$QTY) # p-valued 값이 0.05보다 작으므로 정규분포를 따른다
 
 
-data1 = data1[-c(3)] #???
-data1
+##상관관계
+data1 = data1[-c(3)]
 cor(data1)
 
 data2 = data2[-c(3)]
@@ -38,61 +50,102 @@ cor(data2)
 
 ### https://bioinformaticsandme.tistory.com/290
 
-out1 = lm(QTY~ ITEM_CNT+PRICE+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY,data=data1)
-out2 = lm(QTY~ ITEM_CNT+PRICE+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY,data=data2) 
 
-out1
-out2
+##회귀모형 생성
+out1 = lm(QTY~., data=data1)
+out2 = lm(QTY~., data=data2)
 
-both1=step(out1,direction="both",trcce=FALSE) # step 함수를 사용해 기존 회귀모형에서 유의하지 않은 변수 제거
-both2=step(out2,direction="both",trcce=FALSE)
+#out1 = lm(QTY~ ITEM_CNT+PRICE+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY,data=data1)
+#out2 = lm(QTY~ ITEM_CNT+PRICE+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY,data=data2) 
 
-both1
-both2
+summary(out1)
+summary(out2)
 
-#f-test분산분석으로 두 회귀모형의 설명력을 비교하여 첫번째 회귀모형에서 제거된 변수들의 기여도 평가
+# step 함수를 사용해 기존 회귀모형에서 유의하지 않은 변수 제거
+# 변수선택 방법은 forward, backward, stepwise 세가지
+# forward 결정계수 (both1=0.7164, both2=0.8677)
+# backward 결정계수 (both1=0.7261, both2=0.8705)
+# stepwise 결정계수 (both1=0.7261, both2=0.8705)
+both1=step(out1,direction="both",trace=FALSE)
+both2=step(out2,direction="both",trace=FALSE)
 
-anova(out1,both1) # f-test결과 p-value값이 0.7997로 매우 크므로 앞서 제거된 변수가 회귀모형에 대한 기여도가 적음을 알 수 있음 
-anova(out2,both2) # f-test결과 p-value값이 0.9637로 매우 크므로 앞서 제거된 변수가 회귀모형에 대한 기여도가 적
-
-# 최종 회귀모형 평가
-summary(both1) # 최종 회귀모형이 예측변수들의 70.54%를 설명
-summary(both2) # 최종 회귀모형이 예측변수들의 85.1%를 설명
+summary(both1)
+summary(both2)
 # 결과 아래쪽의 F-statistic 결과의 p-value를 보면 둘다 0.05보다 작아 이 모델은 유의하게 사용할 수 있다고 판단 가능하다.
+
+
+##f-test분산분석으로 두 회귀모형의 설명력을 비교하여 제거된 변수들의 기여도 평가
+anova(out1,both1)
+anova(out2,both2) 
+# f-test결과 p-value값이 0.7997와 0.9637로 매우 크므로 앞서 제거된 변수가 회귀모형에 대한 기여도가 적음을 알 수 있음 
 
 
 
 # 다중공선성 확인
 # 다중공선성은 분산팽창지수(VIF)라는 통계량을 사용하여 계산 가능
 # VIF가 10을 넘지 않으므로 다중공선성 문제가 없음을 확인
-install.packages('car')
 library(car)
-vif(both1)
-vif(both2)
+a= vif(both1)
+b= vif(both2)
+sqrt(a)
+sqrt(b)
+library(psych)
+pairs.panels(data1[names(data1)])
+
+par(mfrow = c(2,2))
+plot(both1)
+plot(both2)
+#눈에 띄는 이상치가 몇개보임
 
 
+#이상치 지우고 다시 회귀 
+
+fit1 = lm(QTY ~ X + YM + ITEM_CNT + PRICE + MAXTEMP + SALEDAY + RAIN_DAY + 
+            HOLIDAY, data = data1[-c(22,26,53),])
+summary(fit1) #이상치 제거후 결정계수가 0.7699으로 상승
+
+fit2 = lm(QTY ~ X + YM + PRICE + MAXTEMP + SALEDAY + HOLIDAY, data = data2[-c(41,39,56),])
+summary(fit2) #이상치 제거후 결정계수가 0.9251으로 상승
 
 
-#data1 = lm(QTY ~.,data = data1)
-#par(mfrow = c(2,2))
-#plot(data)
+#fit1 = lm(QTY ~ ITEM_CNT + PRICE + MAXTEMP + RAIN_DAY, data = data1[-c(22,52,53,60),])
+#summary(fit1) #이상치 제거후 결정계수가 0.7823으로 상승
 
-#data2 = lm(QTY ~.,data = data2)
-#par(mfrow = c(2,2))
-#plot(data2)
-
-install.packages("forecast")
-library(forecast)
+#fit2 = lm(QTY ~ PRICE + MAXTEMP + SALEDAY + HOLIDAY, data = data2[-c(41,56,),])
+#summary(fit2) #이상치 제거후 결정계수가 0.8933으로 상승
 
 pred1 = data1 %>%
-  mutate(pred_QTY1 = -1054+22.46*ITEM_CNT+0.6854*PRICE+8.875*MAXTEMP+0.006731*RAIN_DAY)%>%
+  mutate(pred_QTY1 = 1045-24.30*X-0.5320*YM+36.14*ITEM_CNT+1.046*PRICE+9.634*MAXTEMP+0.008296*SALEDAY+0.005624*RAIN_DAY-10.44*HOLIDAY)%>%
   summarise(QTY,pred_QTY1)
 pred1
 
 pred2 = data2 %>%
-  mutate(pred_QTY2 = 2328-3.122*PRICE+66.72*MAXTEMP+0.01273*SALEDAY+76.38*HOLIDAY)%>%
+  mutate(pred_QTY2 = 2747-3.204*PRICE+62.27*MAXTEMP+0.01181*SALEDAY+67.03*HOLIDAY)%>%
   summarise(QTY,pred_QTY2)
 pred2
+
+
+#pred1 = data1 %>%
+#  mutate(pred_QTY1 = -1495+7.941*ITEM_CNT+1.026*PRICE+7.884*MAXTEMP+0.007359*RAIN_DAY)%>%
+#  summarise(QTY,pred_QTY1)
+#pred1
+
+#pred2 = data2 %>%
+#  mutate(pred_QTY2 = 2747-3.204*PRICE+62.27*MAXTEMP+0.01181*SALEDAY+67.03*HOLIDAY)%>%
+#  summarise(QTY,pred_QTY2)
+#pred2
+
+
+
+#pred1 = data1 %>%
+#  mutate(pred_QTY1 = -1054+22.46*ITEM_CNT+0.6854*PRICE+8.875*MAXTEMP+0.006731*RAIN_DAY)%>%
+#  summarise(QTY,pred_QTY1)
+#pred1
+
+#pred2 = data2 %>%
+#  mutate(pred_QTY2 = 2328-3.122*PRICE+66.72*MAXTEMP+0.01273*SALEDAY+76.38*HOLIDAY)%>%
+#  summarise(QTY,pred_QTY2)
+#pred2
 
 
 drink1 = merge(data1, pred1, by = 'QTY')
@@ -130,12 +183,11 @@ mean(drink2$accuracy2)
 
 
 
-
-
-
-
 install.packages("caret")
 library(caret)
+
+
+
 
 idx1 = sample(1:nrow(data1), size=nrow(data1)*0.7, replace = F)
 data1_train = data1[idx1, ]
@@ -156,24 +208,32 @@ dim(data2_test)
 
 
 
-lm.fit1 = lm(PRICE ~ ITEM_CNT+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY, data=data1_train)
+lm.fit1 = lm(QTY ~ PRICE+ITEM_CNT+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY, data=data1_train)
 summary(lm.fit1)
 
 lm.fit11 = step(lm.fit1, method="both")
 summary(lm.fit11)
 
-#회귀식에 x추가하고 
-#newdata <- data.frame('x'=c(61)
-
 lm.yhat111 = predict(lm.fit11, newdata=dataa)
 lm.yhat111
+a = data.frame(lm.yhat111)
+head(a)
+str(a)
+qty=c(13,17,22,23,25,26,32,35,40,42,43,44,46,48,50,52,56,58,59)
+aa = data.frame(qty,a)
+aa
+
+aaa = merge(data1, a, by = 'QTY')
+
+
+
 k1=mean((lm.yhat111-data1_test$PRICE)^2)
 sqrt(k1)
 plot(lm.yhat111, data1_test$PRICE)
 abline(a=0,b=1,col=2)
 
 
-lm.fit2 = lm(PRICE ~ ITEM_CNT+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY, data=data2_train)
+lm.fit2 = lm(QTY ~ PRICE+ITEM_CNT+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY, data=data2_train)
 summary(lm.fit2)
 
 lm.fit22 = step(lm.fit2, method="both")
