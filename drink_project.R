@@ -1,7 +1,7 @@
-setwd("C:/Users/rlagh/OneDrive/바탕 화면/김유은/R/R(AI)/R-basic")
+setwd("C:/Rdata")
 getwd()
 
-data = read.csv("sales_AI_first.csv")
+data = read.csv("sales_AI_first1.csv")
 head(data)
 str(data)
 
@@ -30,6 +30,7 @@ shapiro.test(data2$QTY) # p-valued 값이 0.05보다 작으므로 정규분포�
 
 
 data1 = data1[-c(3)] #???
+data1
 cor(data1)
 
 data2 = data2[-c(3)]
@@ -85,14 +86,42 @@ library(forecast)
 
 pred1 = data1 %>%
   mutate(pred_QTY1 = -1054+22.46*ITEM_CNT+0.6854*PRICE+8.875*MAXTEMP+0.006731*RAIN_DAY)%>%
-  summarise(QTY,round(pred_QTY1))
+  summarise(QTY,pred_QTY1)
 pred1
 
 pred2 = data2 %>%
   mutate(pred_QTY2 = 2328-3.122*PRICE+66.72*MAXTEMP+0.01273*SALEDAY+76.38*HOLIDAY)%>%
-  summarise(QTY,round(pred_QTY2))
+  summarise(QTY,pred_QTY2)
 pred2
 
+
+drink1 = merge(data1, pred1, by = 'QTY')
+drink2 = merge(data2, pred2, by = 'QTY')
+head(drink1)
+head(drink2)
+
+drink1 = drink1 %>%
+  mutate(accuracy1 = ifelse( round(pred_QTY1) < QTY, ((round(pred_QTY1)/QTY) * 100),(QTY/(round(pred_QTY1))) * 100))
+drink1
+           
+drink2 = drink2 %>%
+  mutate(accuracy2 = ifelse( round(pred_QTY2) < QTY, ((round(pred_QTY2)/QTY) * 100),(QTY/(round(pred_QTY2))) * 100))
+drink2  
+  
+  
+mean(drink1$accuracy1)  
+mean(drink2$accuracy2)    
+  
+  
+  
+  
+
+
+
+
+
+
+# ----------------------------TEST, TRAIN
 
 # simulation 
 # https://macerayarislari.com/ko/300-examples/7-regression-analysis-in-excel.html
@@ -133,7 +162,10 @@ summary(lm.fit1)
 lm.fit11 = step(lm.fit1, method="both")
 summary(lm.fit11)
 
-lm.yhat111 = predict(lm.fit11, newdata=data1_test)
+#회귀식에 x추가하고 
+#newdata <- data.frame('x'=c(61)
+
+lm.yhat111 = predict(lm.fit11, newdata=dataa)
 lm.yhat111
 k1=mean((lm.yhat111-data1_test$PRICE)^2)
 sqrt(k1)
