@@ -1,8 +1,9 @@
-setwd("C:/Users/rlagh/OneDrive/바탕 화면/김유은/R/R(AI)/R-basic")
+#setwd("C:/Users/rlagh/OneDrive/바탕 화면/김유은/R/R(AI)/R-basic")
+setwd("c:/Rdata")
 getwd()
 
-.libPaths()
-.libPaths("c:/Rdata/Library")
+#.libPaths()
+#.libPaths("c:/Rdata/Library")
 
 install.packages("dplyr")
 install.packages('car')
@@ -27,14 +28,15 @@ data2 = data %>% filter(CATEGORY == '스포츠,이온음료')
 head(data2)
 
 
+
 ##정규성 검정
 par(mfrow = c(1,1))
 #hist(data1$QTY) # 정규분포 x
 #hist(data2$QTY) # 정규분포 x
 
 qqnorm(data1$QTY) #Q-Q plot상의 직선에서 점들이 크게 벗어나 있지 않는다면 QTY 변수는 정규 분포를 따른다고 볼 수 있다.
-qqline(data1$QTY) #Q-Q plot상의 직선에서 점들이 크게 벗어나 있지 않는다면 QTY 변수는 정규 분포를 따른다고 볼 수 있다.
-qqnorm(data2$QTY) #Q-Q plot상의 직선에서 점들이 크게 벗어나 있지 않는다면 QTY 변수는 정규 분포를 따른다고 볼 수 있다.
+qqline(data1$QTY) 
+qqnorm(data2$QTY)
 qqline(data2$QTY)
 
 shapiro.test(data1$QTY) # p-valued 값이 0.05보다 작으므로 정규분포를 따른다
@@ -52,11 +54,12 @@ cor(data2)
 
 
 ##회귀모형 생성
-out1 = lm(QTY~., data=data1)
-out2 = lm(QTY~., data=data2)
 
-#out1 = lm(QTY~ ITEM_CNT+PRICE+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY,data=data1)
-#out2 = lm(QTY~ ITEM_CNT+PRICE+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY,data=data2) 
+#out1 = lm(QTY~., data=data1)
+#out2 = lm(QTY~., data=data2)
+
+out1 = lm(QTY~ ITEM_CNT+PRICE+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY,data=data1)
+out2 = lm(QTY~ ITEM_CNT+PRICE+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY,data=data2) 
 
 summary(out1)
 summary(out2)
@@ -98,29 +101,57 @@ plot(both2)
 #눈에 띄는 이상치가 몇개보임
 
 
-#이상치 지우고 다시 회귀 
+####이상치 지우고 다시 회귀 
 
-fit1 = lm(QTY ~ X + YM + ITEM_CNT + PRICE + MAXTEMP + SALEDAY + RAIN_DAY + 
-            HOLIDAY, data = data1[-c(22,26,53),])
-summary(fit1) #이상치 제거후 결정계수가 0.7699으로 상승
+#fit1 = lm(QTY ~ X + YM + ITEM_CNT + PRICE + MAXTEMP + SALEDAY + RAIN_DAY + 
+#            HOLIDAY, data = data1[-c(22,26,53),])
+#summary(fit1) #이상치 제거후 결정계수가 0.7699으로 상승
 
-fit2 = lm(QTY ~ X + YM + PRICE + MAXTEMP + SALEDAY + HOLIDAY, data = data2[-c(41,39,56),])
-summary(fit2) #이상치 제거후 결정계수가 0.9251으로 상승
+#fit2 = lm(QTY ~ X + YM + PRICE + MAXTEMP + SALEDAY + HOLIDAY, data = data2[-c(41,39,56),])
+#summary(fit2) #이상치 제거후 결정계수가 0.9251으로 상승
 
 
-#fit1 = lm(QTY ~ ITEM_CNT + PRICE + MAXTEMP + RAIN_DAY, data = data1[-c(22,52,53,60),])
-#summary(fit1) #이상치 제거후 결정계수가 0.7823으로 상승
+fit1 = lm(QTY ~ PRICE+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY, data = data1[-c(22,26,53),])
+summary(fit1) #이상치 제거후 결정계수가
 
-#fit2 = lm(QTY ~ PRICE + MAXTEMP + SALEDAY + HOLIDAY, data = data2[-c(41,56,),])
-#summary(fit2) #이상치 제거후 결정계수가 0.8933으로 상승
+fit2 = lm(QTY ~ ITEM_CNT+PRICE+MAXTEMP+SALEDAY+RAIN_DAY+HOLIDAY, data = data2, data = data2[-c(41,56),])
+summary(fit2) #이상치 제거후 결정계수가
+
+fit11=step(fit1,direction="both",trace=FALSE)
+fit22=step(fit2,direction="both",trace=FALSE)
+
+summary(fit11)
+summary(fit22)
+
+
+a= vif(fit11)
+b= vif(fit22)
+sqrt(a)
+sqrt(b)
+
+
+
+
+
+#pred1 = data1 %>%
+#  mutate(pred_QTY1 = -1714+1.193*PRICE+8.825*MAXTEMP+0.007430*RAIN_DAY)%>%
+#  summarise(QTY,pred_QTY1)
+#pred1
+
+#pred2 = data2 %>%
+#  mutate(pred_QTY2 = 2922-3.284*PRICE+61.60*MAXTEMP+0.01221*SALEDAY+56.16*HOLIDAY)%>%
+#  summarise(QTY,pred_QTY2)
+#pred2
+
+
 
 pred1 = data1 %>%
-  mutate(pred_QTY1 = 1045-24.30*X-0.5320*YM+36.14*ITEM_CNT+1.046*PRICE+9.634*MAXTEMP+0.008296*SALEDAY+0.005624*RAIN_DAY-10.44*HOLIDAY)%>%
+  mutate(pred_QTY1 = -1497+0.08315*PRICE+8.917*MAXTEMP+0.002189*SALEDAY+0.007381*RAIN_DAY)%>%
   summarise(QTY,pred_QTY1)
 pred1
 
 pred2 = data2 %>%
-  mutate(pred_QTY2 = 2747-3.204*PRICE+62.27*MAXTEMP+0.01181*SALEDAY+67.03*HOLIDAY)%>%
+  mutate(pred_QTY2 = -1149-42.24*X+5.751*YM-3.296*PRICE+70.58*MAXTEMP+0.01158*SALEDAY)%>%
   summarise(QTY,pred_QTY2)
 pred2
 
