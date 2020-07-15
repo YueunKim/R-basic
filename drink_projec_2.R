@@ -1,3 +1,7 @@
+.libPaths()
+.libPaths("c:/Rdata/Library")
+
+install.packages("leaps")
 install.packages("dplyr")
 install.packages("ggplot2")
 install.packages("caret")
@@ -6,7 +10,8 @@ library(ggplot2)
 library(caret)
 
 ## 데이터 불러오기
-setwd("c:/Rdata")
+setwd("C:/Users/rlagh/OneDrive/바탕 화면/김유은/R/R(AI)/R-basic")
+#setwd("c:/Rdata")
 data = read.csv("sales_AI_first1.csv")
 head(data)
 
@@ -70,14 +75,15 @@ out1 = lm(QTY~., data = data1_eff)
 out2 = lm(QTY~., data = data2_eff)
 
 
-## Stepwise selection 모형 선택시
+###### Stepwise selection 모형 선택시
 
+# step 함수를 사용해 기존 회귀모형에서 유의하지 않은 변수 제거
 both1 = step(out1, direction="both",trace = FALSE)
 both2 = step(out2, direction="both",trace = FALSE)
 
 summary(both1)
 summary(both2)
-
+# 결과 아래쪽의 F-statistic 결과의 p-value를 보면 둘다 0.05보다 작아 이 모델은 유의하게 사용할 수 있다고 판단 가능하다.
 
 ## 추정을 위한 회귀모형에 따른 유의성 검증과 잔차 분석
 ## 분산분석 (ANOVA : Analysis Of Variance): 결과가 유의미한지를 판별
@@ -85,17 +91,13 @@ summary(both2)
 anova(both1)
 anova(both2)
 
-
-## 다중공선성 검사
-# 10을 넘지 않으므로 패스
-library(car)
-a1= vif(both1)
-b1= vif(both2)
-sqrt(a1)
-sqrt(b1)
-
+anova(out1,both1)
+anova(out2,both2) 
+# f-test결과 p-value값이 0.9376와 0.9616로 매우 크므로 앞서 제거된 변수가 회귀모형에 대한 기여도가 적음을 알 수 있음 
 
 par(mfrow = c(2,2))
+
+## 잔차분석
 ##  Normal Q-Q : 잔차가 정규분포를 따르는지 확인하기 위한 Q-Q plot
 ##  Scale-Location : 이상점(outlier)을 탐지할 수 있는 그래프로 빨간색 추세선이 0인 직선이 가장 이상적이며 크게 벗어난 값은 이상점일 가능성 있음
 ##  Residuals vs Leverage : 레버리지(leverage)는 설명변수가 얼마나 극단에 치우쳐 있는지를 말합니다. 
@@ -104,26 +106,47 @@ par(mfrow = c(2,2))
 plot(both1)
 plot(both2)
 
+
+## 다중공선성 검사
+# 10을 넘지 않으므로 패스
+
+library(car)
+vif_1= vif(both1)
+vif_2= vif(both2)
+sqrt(vif_1)
+sqrt(vif_2)
+
+
+
 ## 예측모형 검증
 
+#data1_eff = data1_eff %>%  # RAIN_DAY 제거
+#  mutate(QTY_pred = -2421 -32.94*X +57.37*ITEM_CNT + 1.041*PRICE + 13.32 * MAXTEMP + 0.007616*SALEDAY)
+#data1_eff
+
+
 data1_eff = data1_eff %>% 
-  mutate(QTY_pred = -2212 + -29.59*X +52.28*ITEM_CNT + 0.9627*PRICE + 9.764 * MAXTEMP + 0.007023*SALEDAY+ 0.005063*RAIN_DAY)
+  mutate(QTY_pred = -2212 -29.59*X +52.28*ITEM_CNT + 0.9627*PRICE 
+         + 9.764 * MAXTEMP + 0.007023*SALEDAY+ 0.005063*RAIN_DAY)
 data1_eff
 
 
 data2_eff = data2_eff %>% 
-  mutate(QTY_pred = 2328 - 3.122*PRICE + 66.72 * MAXTEMP + 0.01273*SALEDAY + 76.38*HOLIDAY)
+  mutate(QTY_pred = 2328 - 3.122*PRICE + 66.72 * MAXTEMP 
+         + 0.01273*SALEDAY + 76.38*HOLIDAY)
 data2_eff
 
 
 
 ## Accurancy
 data1_eff = data1_eff %>%
-  mutate(QTY_acc = ifelse(QTY_pred < QTY, ((QTY_pred/QTY) * 100),((QTY/QTY_pred) * 100)))
+  mutate(QTY_acc = ifelse(QTY_pred < QTY, ((QTY_pred/QTY) * 100),
+                          ((QTY/QTY_pred) * 100)))
 data1_eff
 
 data2_eff = data2_eff %>%
-  mutate(QTY_acc = ifelse(QTY_pred < QTY, ((QTY_pred/QTY) * 100),((QTY/QTY_pred) * 100)))
+  mutate(QTY_acc = ifelse(QTY_pred < QTY, ((QTY_pred/QTY) * 100),
+                          ((QTY/QTY_pred) * 100)))
 data2_eff
 
 mean(data1_eff$QTY_acc)
@@ -145,15 +168,15 @@ leaps1 = regsubsets(QTY~., data = data1_eff, nbest = 5)
 summary(leaps1)
 plot(leaps1)
 
-plot(leaps,scale='bic')
+plot(leaps1,scale='bic')
 out_bic1 = lm(QTY~ITEM_CNT+PRICE+MAXTEMP, data =  data1_eff)
 summary(out_bic1)
 
-plot(leaps, scale = "Cp")
+plot(leaps1, scale = "Cp")
 out_cp1 = lm(QTY~X+ITEM_CNT+PRICE+MAXTEMP+SALEDAY, data = data1_eff)
 summary(out_cp1)
 
-plot(leaps,scale = "adjr2")
+plot(leaps1,scale = "adjr2")
 out_ad1 = lm(QTY~X+ITEM_CNT+PRICE+MAXTEMP+SALEDAY+RAIN_DAY, data = data1_eff)
 summary(out_ad1)
 # adjr2가 가장 높은 결정계수를 가짐
@@ -175,6 +198,8 @@ summary(out_cp2)
 plot(leaps2,scale = "adjr2")
 out_ad2 = lm(QTY~PRICE+MAXTEMP+SALEDAY+HOLIDAY, data = data2_eff)
 summary(out_ad2)
+
+
 # 셋 다 같은 결정계수를 가짐
 # 하지만 both2과 같은값
 
